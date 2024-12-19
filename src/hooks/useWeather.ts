@@ -1,5 +1,43 @@
 import axios from "axios";
+import { z } from "zod";
+//import { InferOutput, number, object, parse, string } from "valibot";
 import { SearchType } from "../types";
+
+//? Type Guards
+// unknown es un tipo de datos que no sabemos que tipo de dato es, en el momento de compilacion
+// function isWeatherResponse(weather: unknown): weather is Weather {
+//   return (
+//     Boolean(weather) &&
+//     typeof weather === "object" &&
+//     typeof (weather as Weather).name === "string" &&
+//     typeof (weather as Weather).main.temp === "number" &&
+//     typeof (weather as Weather).main.temp_min === "number" &&
+//     typeof (weather as Weather).main.temp_max === "number"
+//   );
+// }
+//? Utilizando ZOD
+// utiliza un schema para validar la data que estamos recibiendo
+const WeatherSchema = z.object({
+  name: z.string(),
+  main: z.object({
+    temp: z.number(),
+    temp_max: z.number(),
+    temp_min: z.number(),
+  }),
+});
+type Weather = z.infer<typeof WeatherSchema>;
+
+//? Utilizando Valibot
+// const WeatherSchema = object({
+//   name: string(),
+//   main: object({
+//     temp: number(),
+//     temp_max: number(),
+//     temp_min: number(),
+//   }),
+// });
+// type Weather = InferOutput<typeof WeatherSchema>;
+
 export default function useWeather() {
   const fetchWeather = async (search: SearchType) => {
     const APIkey = import.meta.env.VITE_API_KEY_OPEN_WEATHER;
@@ -14,8 +52,36 @@ export default function useWeather() {
       const lon = data[0].lon;
 
       const weatherResult = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${APIkey}`;
+
+      //? castear el type de data a Weather
+      // const { data: weatherData } = await axios.get<Weather>(weatherResult);
+      // console.log(weatherData.main.temp);
+      /* esta la podemos usar asi de afanes ya que estariamos forzando a que sea de este type y si llegado caso llegase a cambiar tocaria modificar */
+
+      //? Type Guards
+      // const { data: weatherData } = await axios.get(weatherResult);
+      // const result = isWeatherResponse(weatherData);
+      // if (result) {
+      //   console.log(weatherData.main.temp);
+      // }
+      /*Bsuca por medio de una funcion externa que dicha solicitud la cual estamos haciendo cumpla con dicha extructura, tampoco es mantenible, bueno si nos piden hacerlo de una forma sin librerias */
+
+      //? Utilizando ZOD
       const { data: weatherData } = await axios.get(weatherResult);
-      console.log(weatherData);
+      const result = WeatherSchema.safeParse(weatherData);
+      if (result.success) {
+        console.log(result.data.name);
+        console.log(result.data.main.temp);
+      }
+      /* Utiliza un schema para validar la data que estamos recibiendo, es mas mantenible y mas facil de leer, pero tiene el mismo problema del anterior que si la base esta mal formada da error */
+
+      //? Utilizando Valibot
+      // const { data: weatherData } = await axios.get(weatherResult);
+      // const result = parse(WeatherSchema, weatherData);
+      // if (result) {
+      //   console.log(result.name);
+      //   console.log(result.main.temp);
+      // }
     } catch (error) {
       console.error(error);
     }
