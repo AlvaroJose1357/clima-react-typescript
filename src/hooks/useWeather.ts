@@ -51,6 +51,7 @@ const initialState = {
 export default function useWeather() {
   const [weather, setWeather] = useState<Weather>(initialState);
   const [loading, setLoading] = useState<boolean>(false);
+  const [notFound, setNotFound] = useState<boolean>(false);
 
   const fetchWeather = async (search: SearchType) => {
     const APIkey = import.meta.env.VITE_API_KEY_OPEN_WEATHER;
@@ -62,6 +63,21 @@ export default function useWeather() {
       );
 
       // console.log(data);
+
+      // comprobar si existe la ciudad
+      // if (!data.length) {
+      //   throw new Error("City not found");
+      // }
+      // if (data.length === 0) {
+      //   throw new Error("City not found");
+      // }
+      // if (data[0] === undefined) {
+      //   throw new Error("City not found");
+      // }
+      if (!data[0]) {
+        setNotFound(true);
+        return;
+      }
 
       const lat = data[0].lat;
       const lon = data[0].lon;
@@ -104,7 +120,7 @@ export default function useWeather() {
   };
 
   const hasWeatherData = useMemo(() => weather.name, [weather]);
-  return { weather, loading, fetchWeather, hasWeatherData };
+  return { weather, loading, notFound, fetchWeather, hasWeatherData };
 }
 
 // const [weather, setWeather] = useState<Weather | null>(null);
