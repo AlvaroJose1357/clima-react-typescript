@@ -2,6 +2,7 @@ import axios from "axios";
 import { z } from "zod";
 //import { InferOutput, number, object, parse, string } from "valibot";
 import { SearchType } from "../types";
+import { useMemo, useState } from "react";
 
 //? Type Guards
 // unknown es un tipo de datos que no sabemos que tipo de dato es, en el momento de compilacion
@@ -25,7 +26,7 @@ const WeatherSchema = z.object({
     temp_min: z.number(),
   }),
 });
-type Weather = z.infer<typeof WeatherSchema>;
+export type Weather = z.infer<typeof WeatherSchema>;
 
 //? Utilizando Valibot
 // const WeatherSchema = object({
@@ -38,7 +39,17 @@ type Weather = z.infer<typeof WeatherSchema>;
 // });
 // type Weather = InferOutput<typeof WeatherSchema>;
 
+const initialState = {
+  name: "",
+  main: {
+    temp: 0,
+    temp_max: 0,
+    temp_min: 0,
+  },
+};
+
 export default function useWeather() {
+  const [weather, setWeather] = useState<Weather>(initialState);
   const fetchWeather = async (search: SearchType) => {
     const APIkey = import.meta.env.VITE_API_KEY_OPEN_WEATHER;
     try {
@@ -46,7 +57,7 @@ export default function useWeather() {
         `http://api.openweathermap.org/geo/1.0/direct?q=${search.city},${search.country}&appid=${APIkey}`
       );
 
-      console.log(data);
+      // console.log(data);
 
       const lat = data[0].lat;
       const lon = data[0].lon;
@@ -70,8 +81,7 @@ export default function useWeather() {
       const { data: weatherData } = await axios.get(weatherResult);
       const result = WeatherSchema.safeParse(weatherData);
       if (result.success) {
-        console.log(result.data.name);
-        console.log(result.data.main.temp);
+        setWeather(result.data);
       }
       /* Utiliza un schema para validar la data que estamos recibiendo, es mas mantenible y mas facil de leer, pero tiene el mismo problema del anterior que si la base esta mal formada da error */
 
@@ -86,7 +96,9 @@ export default function useWeather() {
       console.error(error);
     }
   };
-  return { fetchWeather };
+
+  const hasWeatherData = useMemo(() => weather.name, [weather]);
+  return { weather, fetchWeather, hasWeatherData };
 }
 
 // const [weather, setWeather] = useState<Weather | null>(null);

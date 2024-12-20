@@ -8,11 +8,11 @@ export type CountryType = {
   name: string;
 };
 
-export type Weather = {
-  name: string;
-  main: {
-    temp: number;
-    temp_min: number;
-    temp_max: number;
-  };
-};
+// export type Weather = {
+//   name: string;
+//   main: {
+//     temp: number;
+//     temp_min: number;
+//     temp_max: number;
+//   };
+// };
